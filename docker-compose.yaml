@@ -1,0 +1,19 @@
+
+services:
+  wireguard-config:
+    build: .
+    container_name: wireguard_config_generator
+    environment:
+      - CLIENT_IP=10.205.0.26 # Set to the IP address you want to assign to the client
+      # - SERVER_PUBLIC_KEY="" # Set to the public key of the WireGuard server
+      # - SERVER_ENDPOINT="" # Set to the endpoint of the WireGuard server
+      - ALLOWED_IPS="0.0.0.0/0" # Adjust this to match your VPN subnet if split tunneling
+      - DNS_SERVER="10.205.0.1,1.1.1.1" # Set to your preferred DNS server
+    env_file: # Load environment variables from .env file
+      - .env 
+    volumes:
+      - ./generate_config.sh:/usr/local/bin/generate_config.sh
+      - ./output:/config-output
+    stdin_open: true
+    tty: true
+    entrypoint: ["/bin/bash", "-c", "chmod +x /usr/local/bin/generate_config.sh && /usr/local/bin/generate_config.sh $CLIENT_IP"]

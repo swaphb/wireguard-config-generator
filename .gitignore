@@ -1,0 +1,5 @@
+# Ignore outputs directory
+output/
+
+# Ignore .env file
+.env
