@@ -1,4 +1,4 @@
-# WireGuard Configuration Generator
+# WireGuard Client Configuration Generator
 
 ## Overview
 
