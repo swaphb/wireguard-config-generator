@@ -1,16 +1,33 @@
 #!/bin/bash
 
-# Ensure required variables are supplied
+# A helper function that checks that an environment variable is set,
+# strips any leading/trailing quotes, and exports the cleaned value back.
 check_env_var() {
-    local var_name=$1
-    local var_value=$(eval echo \$$var_name)
+    local var_name="$1"
+    local var_value
+
+    # Read the current value of the variable
+    var_value="$(eval echo "\$$var_name")"
+
+    # If the variable is empty, exit with an error
     if [ -z "$var_value" ]; then
         echo "Error: Environment variable '$var_name' is not set. Please supply it via the Docker Compose file or .env file."
         exit 1
     fi
+
+    # Strip any leading/trailing single or double quotes
+    # For example:
+    #   "value"   -> value
+    #   'value'   -> value
+    #   ""value"" -> value
+    var_value="$(echo "$var_value" | sed -E 's/^["'\''"]+|["'\''"]+$//g')"
+
+    # Export the stripped value so it is available outside this function
+    # (optional - if you just want a local variable you can skip the export)
+    export "$var_name"="$var_value"
 }
 
-# Check all required variables
+# Ensure required variables are supplied (and stripped)
 check_env_var "CLIENT_IP"
 check_env_var "SERVER_PUBLIC_KEY"
 check_env_var "SERVER_ENDPOINT"
@@ -25,13 +42,13 @@ fi
 
 # Generate keys
 PRIVATE_KEY=$(wg genkey)
-PUBLIC_KEY=$(echo $PRIVATE_KEY | wg pubkey)
+PUBLIC_KEY=$(echo "$PRIVATE_KEY" | wg pubkey)
 PRESHARED_KEY=$(wg genpsk)
 
 # Create the WireGuard configuration file
 CONFIG_FILE="/config-output/${CLIENT_IP}_wg0.conf"
 
-cat <<EOF > $CONFIG_FILE
+cat <<EOF > "$CONFIG_FILE"
 [Interface]
 PrivateKey = $PRIVATE_KEY
 Address = $CLIENT_IP/24
@@ -51,7 +68,7 @@ echo "You can now send this file to your remote developer."
 echo
 
 # Display the client configuration
-cat $CONFIG_FILE
+cat "$CONFIG_FILE"
 echo
 
 # Display the server configuration snippet for this client
